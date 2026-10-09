@@ -32,3 +32,59 @@ La lluvia ácida conserva el tema (contaminación y temperatura), su efecto se m
 **Alternativas consideradas:** mes × alcaldía (pierde detalle y reduce filas).
 
 **Consecuencias:** los datos horarios de RAMA y REDMET se agregan a la semana de cada muestra.
+
+---
+
+## Decisión: usar Parquet particionado por red y año en la capa interim
+
+**Razón:** con los datos de prueba, leer los mismos datos en Parquet fue unas 20 veces más rápido que en CSV.gz y usó menos memoria (ver `docs/architecture.md`). Parquet permite además leer solo algunas columnas y filtrar parámetros.
+
+**Alternativas consideradas:** CSV (lento y sin tipos), un solo Parquet con todos los años (obliga a reescribir todo cuando cambia un año).
+
+**Consecuencias:** se requiere `pyarrow`. Los datos crudos se conservan como CSV en `data/raw/` para trazabilidad.
+
+---
+
+## Decisión: procesar un archivo anual a la vez
+
+**Razón:** cada año horario son millones de filas. Limpiar y agregar año por año mantiene la memoria acotada y permite no repetir años que no cambiaron (el pipeline revisa la fecha de modificación).
+
+**Alternativas consideradas:** cargar todos los años juntos (más simple, pero no escala a 10 o más años).
+
+**Consecuencias:** el agregado diario se guarda por año y luego se une. Un mismo día puede aparecer en dos archivos (la hora 24:00 del 31 de diciembre); se resuelve promediando por estación y fecha.
+
+---
+
+## Decisión: convertir fechas con formato fijo antes de dejar que pandas adivine
+
+**Razón:** con 700 mil fechas, adivinar el formato tardó unos 39 s y el formato fijo `%d/%m/%Y %H:%M` unos 2.6 s.
+
+**Alternativas consideradas:** `format="mixed"` siempre (robusto pero lento).
+
+**Consecuencias:** `parsear_fecha` prueba una lista de formatos conocidos en una muestra y solo usa la inferencia si ninguno funciona.
+
+---
+
+## Decisión: asignar cada hora al día en que termina la medición
+
+**Razón:** el SIMAT reporta horas de 1 a 24; la hora "24:00" es el promedio de 23:00 a 24:00 de ese mismo día. Se convierte a 00:00 del día siguiente para tener un datetime válido, y al agregar por día se resta una hora para que quede en el día correcto.
+
+**Consecuencias:** cada día tiene sus 24 horas completas.
+
+---
+
+## Decisión: emparejar estaciones por clave, luego por cercanía, luego promedio de la ciudad
+
+**Razón:** las estaciones REDDA no siempre miden contaminantes o meteorología. Usar la estación RAMA/REDMET más cercana (hasta 10 km, configurable) es la aproximación más directa a lo que respiró la nube que llovió ahí.
+
+**Alternativas consideradas:** promedio de toda la ciudad para todas (pierde la diferencia norte-sur, que es parte de la pregunta); interpolación espacial (más compleja, se puede evaluar en el examen final).
+
+**Consecuencias:** el método usado para cada estación queda en `reports/tables/emparejamiento_estaciones.csv`.
+
+---
+
+## Decisión: datos sintéticos para pruebas y desempeño
+
+**Razón:** las pruebas automáticas no deben depender de internet ni del sitio del SIMAT. `src/utils/datos_sinteticos.py` genera archivos con el mismo formato (notas iniciales, horas 1-24, códigos -99, duplicados).
+
+**Consecuencias:** los datos sintéticos viven en `data/synthetic/` (no se suben a GitHub) y usan su propia configuración, `config/config.sintetico.yaml`, para no mezclarse nunca con los reales. No se usan en el análisis.

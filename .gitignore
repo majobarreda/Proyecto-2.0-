@@ -14,3 +14,6 @@ data/raw/*
 data/interim/*
 data/processed/*
 !data/*/.gitkeep
+
+# Datos sintéticos de prueba
+data/synthetic/
