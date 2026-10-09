@@ -1,11 +1,36 @@
 # Copiar como config/config.yaml y ajustar. config.yaml no se sube a GitHub.
 anios:
-  inicio: 2023   # primer parcial: 2 años para probar; después ampliar a 2015
+  inicio: 2023   # primer parcial: 2 años para probar; para el análisis final usar 2015
   fin: 2024
+
 rutas:
   raw: data/raw/simat
   interim: data/interim
   processed: data/processed
-# Contaminantes precursores de lluvia ácida y variables meteorológicas a conservar
+  sample: data/sample
+  tablas: reports/tables
+  reporte_validacion: docs/validation.md
+
+# Parámetros que se conservan de cada red (claves del SIMAT, en mayúsculas)
 contaminantes: [SO2, NO2, NOX]
 meteorologia: [TMP, RH, WDR, WSP]
+
+# Valores que el SIMAT usa para "sin dato"
+valores_faltantes: [-99, -99.0, -9999]
+
+# Ventana que se asocia a cada muestra semanal de lluvia
+ventana_dias: 7
+
+# Distancia máxima (km) para emparejar una estación REDDA con una RAMA/REDMET
+distancia_max_km: 10
+
+# Rangos válidos para las validaciones
+rangos:
+  PH: [3, 9]
+  SO2: [0, 500]     # ppb
+  NO2: [0, 500]     # ppb
+  NOX: [0, 1000]    # ppb
+  TMP: [-10, 40]    # °C
+  RH: [0, 100]      # %
+  WDR: [0, 360]     # grados
+  WSP: [0, 40]      # m/s

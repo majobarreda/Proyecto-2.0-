@@ -65,7 +65,7 @@ Detalle de cada fuente en `docs/data_dictionary.md`.
 └── tests/
 ```
 
-## Instrucciones iniciales de ejecución
+## Instrucciones de ejecución
 
 Desde la terminal de VS Code, en la carpeta del repositorio:
 
@@ -78,20 +78,39 @@ python -m venv .venv
 # 2. Instalar dependencias
 pip install -r requirements.txt
 
-# 3. Copiar la configuración
+# 3. Copiar la configuración (opcional: si no existe se usa config.example.yaml)
 copy config\config.example.yaml config\config.yaml     # Windows
 # cp config/config.example.yaml config/config.yaml     # Mac / Linux
 
-# 4. Descargar los datos del SIMAT a data/raw/simat/
-python -m src.ingestion.download_data
-
-# 5. Correr las pruebas
-pytest
+# 4. Correr todo: descarga, procesamiento y validación
+python main.py
 ```
 
-El paso 4 imprime, para cada archivo, las primeras filas, las columnas y los valores de estaciones y parámetros.
+O paso por paso:
+
+```bash
+python -m src.ingestion.download_data          # descarga a data/raw/simat/
+python -m src.processing.build_dataset         # raw -> interim -> processed
+python -m src.validation.validate_dataset      # escribe docs/validation.md
+python -m src.processing.comparar_desempeno    # CSV vs Parquet, en reports/tables/desempeno.csv
+pytest                                         # pruebas automáticas
+```
+
+Para probar sin internet: `python main.py --sintetico` genera datos **sintéticos** con el mismo formato en `data/synthetic/` y corre todo con ellos. Nunca se usan para el análisis.
+
+### Dónde quedan los resultados
+
+| Qué | Dónde |
+|---|---|
+| Descargas sin modificar | `data/raw/simat/` |
+| Datos limpios en Parquet, por red y año | `data/interim/` |
+| Dataset final (estación × semana) | `data/processed/dataset_semanal.parquet` |
+| Muestra pequeña para revisar | `data/sample/dataset_semanal_muestra.csv` |
+| Resumen de limpieza, emparejamiento, validación y desempeño | `reports/tables/` |
+| Reporte de validación | `docs/validation.md` |
 
 ## Estado actual
 
-- **Listo:** estructura del repositorio, pregunta, script de descarga del SIMAT, prueba básica de lectura.
-- **Siguiente:** descargar los datos, guardar una muestra en `data/sample/`, completar `notebooks/01_exploration.ipynb` y confirmar las columnas reales en `docs/data_dictionary.md`.
+- **Primer parcial:** estructura, pregunta, alcance, fuentes, script de descarga y notebook de exploración.
+- **Segundo parcial:** pipeline completo de procesamiento (capas raw, interim y processed), validaciones, comparación de desempeño, pruebas automáticas y `main.py`. Probado de punta a punta con datos sintéticos; falta correrlo con los datos reales del SIMAT y actualizar `docs/validation.md` y la tabla de desempeño.
+- **Examen final:** análisis de la pregunta en `src/analysis/` y `notebooks/03_analysis.ipynb`.

@@ -18,7 +18,7 @@ import logging
 import pathlib
 import urllib.request
 
-from src.utils.lectura import leer_csv_simat, leer_texto, separar_notas
+from src.utils.lectura import es_texto, leer_csv_simat, leer_texto, separar_notas
 
 # El sitio publica los mismos archivos en dos hosts; se intenta el primero y luego el segundo.
 HOSTS = [
@@ -30,6 +30,9 @@ REDDA = [
     "redda/concentracion.csv",  # concentración de iones en la lluvia (incluye pH y PP en mm)
     "redda/deposito.csv",       # cantidad de cada ion depositada
 ]
+
+# Catálogo de estaciones (coordenadas). Es opcional: sin él se empareja por clave.
+CATALOGO = "catalogos/cat_estacion.csv"
 
 HORARIOS = [
     "anuales_horarios_gz/contaminantes_{anio}.csv.gz",
@@ -71,8 +74,8 @@ def resumir(path, n=5):
         print("Notas del archivo:\n  " + "\n  ".join(notas))
     print(f"Filas: {len(df):,}  Columnas: {list(df.columns)}")
     print(df.head(n).to_string(index=False))
-    for col in df.select_dtypes(include="object").columns:
-        if df[col].nunique() <= 60:
+    for col in df.columns:
+        if es_texto(df[col]) and df[col].nunique() <= 60:
             print(f"Valores de {col}: {sorted(df[col].dropna().astype(str).unique())}")
 
 
@@ -101,6 +104,8 @@ def main():
     a, b = (int(x) for x in args.anios.split("-")) if args.anios else leer_anios_config()
     rutas = REDDA + [h.format(anio=y) for y in range(a, b + 1) for h in HORARIOS]
     fallidos = []
+    if descargar(CATALOGO) is None:
+        log.warning("Sin catálogo de estaciones; las estaciones se emparejarán solo por clave")
     for ruta in rutas:
         path = descargar(ruta)
         if path is None:
