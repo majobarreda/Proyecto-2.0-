@@ -1,0 +1,9 @@
+[project]
+name = "lluvia-acida-cdmx"
+version = "0.1.0"
+description = "Contaminación, temperatura y lluvia ácida en la Ciudad de México"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

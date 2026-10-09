@@ -1,0 +1,11 @@
+# Copiar como config/config.yaml y ajustar. config.yaml no se sube a GitHub.
+anios:
+  inicio: 2023   # primer parcial: 2 años para probar; después ampliar a 2015
+  fin: 2024
+rutas:
+  raw: data/raw/simat
+  interim: data/interim
+  processed: data/processed
+# Contaminantes precursores de lluvia ácida y variables meteorológicas a conservar
+contaminantes: [SO2, NO2, NOX]
+meteorologia: [TMP, RH, WDR, WSP]
